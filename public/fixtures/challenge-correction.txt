@@ -1,0 +1,3 @@
+AUTHORITATIVE CORRECTION
+
+The signed release record confirms that deployment completed on Friday at 18:42 UTC under release identifier R-204

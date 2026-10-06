@@ -1,0 +1,10 @@
+node_modules/
+dist/
+test-results/
+.env
+.env.local
+.netlify/
+*.tsbuildinfo
+*.zip
+__pycache__/
+*.pyc
