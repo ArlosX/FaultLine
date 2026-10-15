@@ -119,16 +119,19 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--acid); outline-
 .experiment__top { display: flex; justify-content: space-between; gap: 40px; }
 .experiment__top h3 { margin: 15px 0 8px; font-size: clamp(38px, 4.2vw, 66px); line-height: 1; letter-spacing: -.055em; }
 .experiment__top p { max-width: 560px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
-.score-dial { flex: 0 0 auto; width: 108px; height: 108px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; background: radial-gradient(circle closest-side, var(--panel) 83%, transparent 84% 99%), conic-gradient(var(--acid) var(--score), #202720 0); animation: dial-in 680ms 100ms cubic-bezier(.2,.8,.2,1) both; }
+.score-dial { flex: 0 0 auto; width: 132px; height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-radius: 50%; background: radial-gradient(circle closest-side, var(--panel) 83%, transparent 84% 99%), conic-gradient(var(--acid) var(--score), #202720 0); animation: dial-in 680ms 100ms cubic-bezier(.2,.8,.2,1) both; }
 .score-dial strong { font: 600 25px "JetBrains Mono", monospace; }
 .score-dial span { color: var(--muted); font: 500 7px "JetBrains Mono", monospace; }
+.score-dial small { color: #929e95; font: 500 7px "JetBrains Mono", monospace; }
+.drawer-expected { display: flex; align-items: center; gap: 10px; color: var(--muted); font: 500 9px "JetBrains Mono", monospace; }
 .evidence-track { margin: 64px 0 44px; display: grid; grid-template-columns: 1fr 130px 1fr; align-items: stretch; }
 .evidence-block { min-height: 230px; padding: 20px; border: 1px solid var(--line); background: #090c0a; position: relative; display: flex; flex-direction: column; animation: evidence-in 520ms 100ms cubic-bezier(.2,.8,.2,1) both; }
 .evidence-block > span { position: absolute; right: 0; top: 0; padding: 7px 10px; color: #8b968e; background: #161b17; font: 600 8px "JetBrains Mono", monospace; }
 .evidence-block__icon { width: 42px; height: 42px; margin-bottom: auto; display: grid; place-items: center; background: #151b16; color: var(--acid); }
 .evidence-block small { color: #929e95; font: 500 8px "JetBrains Mono", monospace; }
 .evidence-block strong { margin: 5px 0 17px; font: 600 23px "JetBrains Mono", monospace; }
-.evidence-block code { padding-top: 13px; border-top: 1px solid var(--line); color: #929e95; font-size: 9px; }
+.evidence-block code { padding-top: 13px; border-top: 1px solid var(--line); color: #929e95; font-size: 9px; overflow-wrap: anywhere; }
+.suite-commitment { display: block; margin-top: 16px; color: #a8b9ac; font-size: 9px; line-height: 1.6; overflow-wrap: anywhere; }
 .evidence-block--challenge { border-color: rgba(255,199,106,.2); animation-delay: 190ms; }
 .evidence-block--challenge .evidence-block__icon { color: var(--amber); }
 .transfer { display: flex; align-items: center; color: #69746c; }
@@ -213,6 +216,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--acid); outline-
 .progress-signal { width: 76px; height: 76px; margin: 0 auto 24px; border: 1px solid rgba(169,255,104,.35); display: grid; place-items: center; color: var(--acid); box-shadow: 0 0 40px rgba(169,255,104,.08); transform: rotate(45deg); }
 .progress-signal svg { animation: spin 1.2s linear infinite; transform: rotate(-45deg); }
 .progress-signal--done svg { animation: none; }
+.progress-signal--failed { border-color: rgba(255, 106, 106, .55); color: #ff6a6a; box-shadow: 0 0 40px rgba(255, 106, 106, .08); }
+.progress-signal--failed svg { animation: none; }
 .drawer-progress h3 { margin: 0; font-size: 24px; }
 .drawer-progress > p { color: var(--muted); font-size: 12px; }
 .transaction-hash { display: block; width: max-content; max-width: 100%; margin: 20px auto 0; padding: 9px 12px; overflow: hidden; color: var(--cyan); background: rgba(121,217,211,.06); font: 500 9px "JetBrains Mono", monospace; }

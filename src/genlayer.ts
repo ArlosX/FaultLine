@@ -16,11 +16,27 @@ export type ContractSuite = {
   expected_baseline: "SUPPORT" | "REJECT" | "UNCLEAR"
   expected_challenge: "SUPPORT" | "REJECT" | "UNCLEAR"
   prompt_version: string
+  fixture_version: string
+  canonical: boolean
+  suite_sha256: string
+  policy_sha256: string
+  baseline_sha256: string
+  challenge_sha256: string
+}
+
+export type ContractProtocol = {
+  version: string
+  owner: string
+  canonical_base_url: string
+  canonical_policy_sha256: string
+  initialized: boolean
 }
 
 export type ContractRun = {
   run_id: string
   suite_id: string
+  suite_sha256: string
+  fixture_version: string
   attack_class: string
   prompt_version: string
   expected_baseline: string
@@ -131,11 +147,11 @@ export class FaultlineClient {
     const client = await this.clientPromise
     const hash = await client.writeContract({ address: this.address, functionName, args, value: 0n })
     this.onSubmitted?.(String(hash))
-    const receipt = await client.waitForTransactionReceipt({ hash, status: "ACCEPTED" as never, retries: 60, interval: 5000 })
-    const typed = receipt as { status_name?: string; statusName?: string; txExecutionResultName?: string }
-    const status = String(typed.status_name || typed.statusName || "UNKNOWN")
-    if ((status !== "ACCEPTED" && status !== "FINALIZED") || typed.txExecutionResultName === "FINISHED_WITH_ERROR") {
-      throw new Error(`GenLayer transaction did not succeed (${status}) — no benchmark result was recorded for this transaction`)
+    const receipt = await client.waitForTransactionReceipt({ hash, status: "ACCEPTED" as never, retries: 120, interval: 5000 })
+    const status = String(receipt.statusName || receipt.status || "UNKNOWN").toUpperCase()
+    const execution = String(receipt.txExecutionResultName || "UNKNOWN").toUpperCase()
+    if ((status !== "ACCEPTED" && status !== "FINALIZED") || execution !== "FINISHED_WITH_RETURN") {
+      throw new Error(`GenLayer write did not execute successfully (${status} / ${execution}); inspect transaction ${String(hash)} before retrying`)
     }
     return { hash: String(hash), status }
   }
@@ -159,6 +175,18 @@ export class FaultlineClient {
   async suites(): Promise<ContractSuite[]> {
     const result = await this.read("get_suites") as Record<string, ContractSuite>
     return Object.values(result || {})
+  }
+
+  async suite(suiteId: string): Promise<ContractSuite> {
+    return this.read("get_suite", [suiteId]) as Promise<ContractSuite>
+  }
+
+  async protocol(): Promise<ContractProtocol> {
+    return this.read("get_protocol") as Promise<ContractProtocol>
+  }
+
+  async run(runId: string): Promise<ContractRun> {
+    return this.read("get_run", [runId]) as Promise<ContractRun>
   }
 
   async runs(): Promise<ContractRun[]> {

@@ -45,6 +45,9 @@ page.on("requestfailed", (request) => report.failedRequests.push({ url: request.
 const startedAt = Date.now()
 await page.goto(baseUrl, { waitUntil: "networkidle", timeout: 20_000 })
 report.measurements.desktopLoadMs = Date.now() - startedAt
+await page.waitForFunction(() => !document.querySelector(".sample-flag")?.textContent?.includes("READING CONTRACT"), undefined, { timeout: 20_000 })
+const contractReady = (await page.locator(".sample-flag").innerText()).includes("CONTRACT READY")
+report.measurements.contractReady = contractReady
 
 await check("Document identity", async () => {
   assert.equal(await page.title(), "Faultline")
@@ -62,6 +65,14 @@ await check("All benchmark fixtures render", async () => {
   assert.equal(await page.locator(".suite-tab").count(), 4)
   const labels = await page.locator(".suite-tab strong").allTextContents()
   assert.deepEqual(labels, ["Injection immunity", "Source order invariance", "Authoritative correction", "Conflict abstention"])
+})
+
+await check("Predefined targets cannot masquerade as measured results", async () => {
+  assert.match(await page.locator(".experiment__result").innerText(), /PREDEFINED EXPECTATION/)
+  assert.match(await page.locator(".experiment__result").innerText(), /LATEST ONCHAIN RESULT[\s\S]*NOT RUN/)
+  assert.match(await page.locator(".score-dial").innerText(), /OBSERVED PASS RATE[\s\S]*0 ONCHAIN RUNS/)
+  assert.equal(await page.locator(".score-dial strong").innerText(), "—")
+  assert.equal(await page.locator(".suite-commitment").count(), 0)
 })
 
 await check("Fixture selection updates the experiment", async () => {
@@ -82,12 +93,12 @@ await check("Run drawer opens from the active experiment", async () => {
   await page.getByRole("button", { name: /Execute selected test/ }).click()
   await page.getByRole("dialog").waitFor()
   assert.match(await page.getByRole("dialog").innerText(), /Conflict abstention/)
-  assert.match(await page.getByRole("dialog").innerText(), /CONTRACT NOT CONFIGURED/)
+  assert.match(await page.getByRole("dialog").innerText(), contractReady ? /CONTRACT READY/ : /CONTRACT NOT CONFIGURED/)
 })
 
-await check("Unconfigured build cannot fabricate an onchain run", async () => {
+await check("Uninitialized contract cannot fabricate an onchain run", async () => {
   assert.equal(await page.getByRole("button", { name: "Run on GenLayer" }).count(), 0)
-  assert.match(await page.getByRole("dialog").innerText(), /Set VITE_FAULTLINE_CONTRACT_ADDRESS/)
+  assert.match(await page.getByRole("dialog").innerText(), contractReady ? /Only the deploying wallet can activate the four canonical suites/ : /Set VITE_FAULTLINE_CONTRACT_ADDRESS/)
   assert.equal(await page.locator(".console-row").count(), 0)
 })
 
@@ -95,7 +106,7 @@ await check("Empty contract ledger remains honest after refresh", async () => {
   await page.getByRole("button", { name: "Close run panel" }).click()
   await page.reload({ waitUntil: "networkidle" })
   assert.equal(await page.locator(".console-row").count(), 0)
-  assert.match(await page.locator(".console-empty").innerText(), /Connect a deployed contract/)
+  assert.match(await page.locator(".console-empty").innerText(), contractReady ? /No accepted runs yet/ : /Connect a deployed contract/)
 })
 
 await check("Header launch control opens a fresh run", async () => {
