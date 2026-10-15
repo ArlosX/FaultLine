@@ -62,4 +62,4 @@ See `DEPLOYMENT.md` for the v3 release sequence. The verified v3 address is set 
 
 ## Steward review evidence
 
-`REVIEW_RESPONSE.md` maps every requested correction to source code and evidence. The v3 contract is deployed and its source and canonical suites are verified on StudioNet. Four live consensus runs remain. The offline regression suite proves tamper rejection under a GenLayer-shaped VM stub; it does **not** prove StudioNet consensus. Do not resubmit the review response as fully verified until four successful live transaction hashes are recorded
+`REVIEW_RESPONSE.md` maps every requested correction to source code and evidence. The v3 contract is deployed and its source and canonical suites are verified on StudioNet. The first live run is finalized; three more canonical runs remain. The offline regression suite proves tamper rejection under a GenLayer-shaped VM stub; it does **not** prove StudioNet consensus. Do not resubmit the review response as fully verified until four successful live transaction hashes are recorded

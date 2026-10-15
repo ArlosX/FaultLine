@@ -56,6 +56,29 @@ export type ContractRun = {
 export type ContractStats = { suite_count: number; run_count: number }
 export type WriteResult = { hash: string; status: string }
 
+type StudioExecutionReceipt = {
+  status?: number | string
+  statusName?: string
+  status_name?: string
+  txExecutionResultName?: string
+  consensus_data?: {
+    leader_receipt?: Array<{
+      execution_result?: string
+      result?: { status?: string }
+      genvm_result?: { error_code?: string | null }
+    }>
+  }
+}
+
+function executionSucceeded(receipt: StudioExecutionReceipt): boolean {
+  if (receipt.txExecutionResultName) return receipt.txExecutionResultName === "FINISHED_WITH_RETURN"
+  // StudioNet currently omits the top-level GenVM result. Its leader receipts
+  // include an actual return and may also include a validator cancelled after quorum.
+  return receipt.consensus_data?.leader_receipt?.some((leader) =>
+    leader.execution_result === "SUCCESS" && leader.result?.status === "return" && !leader.genvm_result?.error_code,
+  ) === true
+}
+
 interface EthereumProvider {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>
   on?(event: string, listener: (...args: unknown[]) => void): void
@@ -146,11 +169,10 @@ export class FaultlineClient {
     const client = await this.clientPromise
     const hash = await client.writeContract({ address: this.address, functionName, args, value: 0n })
     this.onSubmitted?.(String(hash))
-    const receipt = await client.waitForTransactionReceipt({ hash, status: "ACCEPTED" as never, retries: 120, interval: 5000 })
-    const status = String(receipt.statusName || receipt.status || "UNKNOWN").toUpperCase()
-    const execution = String(receipt.txExecutionResultName || "UNKNOWN").toUpperCase()
-    if ((status !== "ACCEPTED" && status !== "FINALIZED") || execution !== "FINISHED_WITH_RETURN") {
-      throw new Error(`GenLayer write did not execute successfully (${status} / ${execution}); inspect transaction ${String(hash)} before retrying`)
+    const receipt = await client.waitForTransactionReceipt({ hash, status: "FINALIZED" as never, retries: 120, interval: 5000 }) as StudioExecutionReceipt
+    const status = String(receipt.status_name || receipt.statusName || receipt.status || "UNKNOWN").toUpperCase()
+    if (status !== "FINALIZED" || !executionSucceeded(receipt)) {
+      throw new Error(`GenLayer write finalized without a successful GenVM return (${status}); inspect transaction ${String(hash)} before retrying`)
     }
     return { hash: String(hash), status }
   }

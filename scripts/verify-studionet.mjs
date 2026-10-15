@@ -73,10 +73,13 @@ try {
     assert(run.baseline_outcome === suite.expected_baseline && run.challenge_outcome === suite.expected_challenge && run.passed === true, `Observed outcomes failed: ${runId}`)
     assert(run.classification === expectedClasses[run.suite_id], `Unexpected classification: ${runId}`)
     const tx = await client.getTransaction({ hash })
-    const status = String(tx.statusName || tx.status || '').toUpperCase()
-    const execution = String(tx.txExecutionResultName || '').toUpperCase()
-    assert(['ACCEPTED', 'FINALIZED'].includes(status) && execution === 'FINISHED_WITH_RETURN', `GenVM transaction failed: ${runId} ${status}/${execution}`)
-    const decoded = JSON.stringify(normalize(tx.txDataDecoded || {}))
+    const status = String(tx.status_name || tx.statusName || tx.status || '').toUpperCase()
+    const returned = tx.txExecutionResultName === 'FINISHED_WITH_RETURN'
+      || tx.consensus_data?.leader_receipt?.some((leader) => leader.execution_result === 'SUCCESS'
+        && leader.result?.status === 'return' && !leader.genvm_result?.error_code)
+    assert(status === 'FINALIZED' && returned, `GenVM transaction failed: ${runId} ${status}`)
+    const execution = 'FINISHED_WITH_RETURN'
+    const decoded = JSON.stringify(normalize(tx.txDataDecoded || tx.data?.calldata?.readable || {}))
     assert(decoded.includes(runId), `Transaction ${hash} does not decode to the claimed run ${runId}`)
     report.push({ suite: run.suite_id, runId, transaction: hash, status, execution, outcome: `${run.baseline_outcome} → ${run.challenge_outcome}`, classification: run.classification, suite_sha256: run.suite_sha256 })
   }
