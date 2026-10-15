@@ -15,7 +15,7 @@
 
 - ۲۲ آزمون رگرسیون و خصمانهٔ قرارداد موفق
 - بیلد نسخهٔ تولید موفق
-- بررسی مرورگر نسخهٔ سوم پس از استقرار باید تکرار شود
+- در مرورگر بی‌سر این محیط، ۱۷ بررسی موفق بود و ۴ بررسی وابسته به RPC به‌دلیل `ERR_CONNECTION_RESET` کامل نشد؛ تست مرورگر روی سایت منتشرشده باید تکرار شود
 - فایل‌های اصلی: `contracts/faultline.py`، `src/App.tsx`، `src/genlayer.ts`، `tests/contract_regression.py` و `scripts/verify-studionet.mjs`
 - شرح فنی پاسخ به داور و هش منابع در `REVIEW_RESPONSE.md`
 
