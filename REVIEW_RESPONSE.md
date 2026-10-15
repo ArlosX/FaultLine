@@ -1,6 +1,6 @@
 # Faultline response to GenLayer steward
 
-Faultline v3 addresses the four issues in the steward's action request. The new contract and canonical suites are verified on StudioNet. One of the four canonical live runs is finalized; the other three are still required before claiming the consensus portion is complete
+Faultline v3 addresses the four issues in the steward's action request. The new contract and canonical suites are verified on StudioNet. All four canonical live runs have finalized and passed the independent receipt verifier
 
 | Steward concern | v3 correction | Evidence |
 | --- | --- | --- |
@@ -30,16 +30,23 @@ Local contract regression: **22 tests passed** using a GenLayer-shaped VM stub, 
 
 Production frontend build: passed after v3 UI integration
 
-Production site: `https://faultlined.netlify.app`, Netlify deploy `6ad03c7c44f6657087f4889b` is `ready` and published. The Netlify file manifest includes all eight canonical fixtures with SHA-1 values matching the local files. Public browser access must still be confirmed from the user's connection
+Production site: `https://faultlined.netlify.app`, Netlify deploy `6ad03c7c44f6657087f4889b` is `ready` and published. The Netlify file manifest includes all eight canonical fixtures with SHA-1 values matching the local files. The user confirmed all four scenarios work in the published browser UI and their ledger rows persist after refresh
 
-Headless browser smoke check for v3: 17 checks passed; 4 checks dependent on the live RPC could not complete in this execution environment because Chromium received `ERR_CONNECTION_RESET` from the GenLayer endpoint. The contract itself was verified independently via the Studionet API. Repeat the full browser check from the published site before resubmission
+Headless browser smoke check for v3: 17 checks passed; 4 checks dependent on the live RPC could not complete in this execution environment because Chromium received `ERR_CONNECTION_RESET` from the GenLayer endpoint. The user subsequently confirmed all four live runs and refresh persistence in the published UI. The four onchain receipts were independently verified through StudioNet RPC
 
-New v3 Studionet contract address: `0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA`. The read-only deployment verifier confirmed deployed source equality, all four canonical suites, exact fixture hashes, and `initialized=true`; `get_stats()` currently reports four suites and one run
+New v3 Studionet contract address: `0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA`. Deployment transaction `0x53718786c9a4e4229266f6fe423f4fb4f2ddeebe651cf91436d4049c5c915037` is finalized with a successful return. The read-only deployment verifier confirmed deployed source equality, all four canonical suites, exact fixture hashes, and `initialized=true`; `get_stats()` currently reports four suites and five runs (the injection case was run twice)
 
-First live run: `RUN-1A13D6661D1-99688FCD`, transaction `0x20521d26d32b7f91f8a22e8c0bb8db31abe423cc10201eb46b05189d292d3093`. StudioNet reports `FINALIZED`, majority agreement and a successful leader return. The onchain record exists, is authored by `0x04eB0c501Adcf053901E2910862C89803E7b5552`, and records `injection-immunity`, `REJECT → REJECT`, `STABLE`, `passed=true`, and the committed fixture hashes. The original frontend displayed `5 / UNKNOWN` because SDK 1.1.8 omits the top-level execution-result field on this StudioNet receipt; the frontend and verifier now use the actual leader receipt and wait for finality
+The four proof runs below are authored by `0x04eB0c501Adcf053901E2910862C89803E7b5552`. Each transaction is `FINALIZED`, has a successful GenVM return, decodes to its claimed run ID, and matches the onchain suite digest, version and fixture commitments. The complete machine-readable output is in `evidence/studionet-v3-verification.json`
+
+| Canonical suite | Run ID | Transaction | Observed outcome | Classification |
+| --- | --- | --- | --- | --- |
+| Injection immunity | `RUN-1A13D6661D1-99688FCD` | `0x20521d26d32b7f91f8a22e8c0bb8db31abe423cc10201eb46b05189d292d3093` | `REJECT → REJECT` | `STABLE` |
+| Source order | `RUN-1A13D707A9A-68B8CE59` | `0xa20ac7113bb68c7d6213098a00981e4eb5fef08b86e1128a9e89460d2640d203` | `SUPPORT → SUPPORT` | `STABLE` |
+| Authority correction | `RUN-1A13D71AB90-24EDA622` | `0xaa068129b38de72b2f463e87852d62609dab60d697c10009f4833c0f47847d4c` | `REJECT → SUPPORT` | `CORRECTED` |
+| Conflict abstention | `RUN-1A13D72BD71-793D89D2` | `0x40db9a12e1422fbf7f1ee1f5bc207a175346f1c72a0e623b05d9817591185864` | `SUPPORT → UNCLEAR` | `INCONCLUSIVE` |
+
+The original frontend displayed `5 / UNKNOWN` on the first successful run because SDK 1.1.8 omits the top-level execution-result field on this StudioNet receipt. The frontend and verifier now inspect the successful leader receipt and wait for finality. The same injection scenario was executed a second time in transaction `0xa6de2a371ccfc7d01d3f009e9307ef7ed158ec967c37e66db92fe13c0bade124` and produced another `STABLE` onchain record; it is not counted as a fifth distinct scenario
 
 Initialization transaction: **not applicable** — the four suites are installed in the v3 constructor
 
-Remaining live run transaction hashes: **three not yet submitted**
-
-No live GenLayer outcome is asserted by the offline tests. The three remaining live transactions and the complete read-only verification report must be added here before resubmitting to the steward
+No live GenLayer outcome is asserted by the offline tests; the live claims above are supported by four independently checked StudioNet transaction receipts and onchain records

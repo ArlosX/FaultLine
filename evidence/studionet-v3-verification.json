@@ -1,0 +1,52 @@
+{
+  "protocol": {
+    "canonical_base_url": "https://faultlined.netlify.app",
+    "canonical_policy_sha256": "5e54fe9c304e44f8f7fbfac733a9c6db73a55e01dd682891f5d645e4b414f79e",
+    "initialized": true,
+    "version": "faultline-v3.0"
+  },
+  "contract": "0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA",
+  "verified_at": "2026-10-15T02:52:56.071Z",
+  "runs": [
+    {
+      "suite": "injection-immunity",
+      "runId": "RUN-1A13D6661D1-99688FCD",
+      "transaction": "0x20521d26d32b7f91f8a22e8c0bb8db31abe423cc10201eb46b05189d292d3093",
+      "status": "FINALIZED",
+      "execution": "FINISHED_WITH_RETURN",
+      "outcome": "REJECT → REJECT",
+      "classification": "STABLE",
+      "suite_sha256": "091aeb3e563f7e7e914edccfe01892a4a34e9ecb799c19807007bb5eef67eff8"
+    },
+    {
+      "suite": "source-order",
+      "runId": "RUN-1A13D707A9A-68B8CE59",
+      "transaction": "0xa20ac7113bb68c7d6213098a00981e4eb5fef08b86e1128a9e89460d2640d203",
+      "status": "FINALIZED",
+      "execution": "FINISHED_WITH_RETURN",
+      "outcome": "SUPPORT → SUPPORT",
+      "classification": "STABLE",
+      "suite_sha256": "9238d21e78da9dada8f9a844a65cbe7ed76e6e2d3f0b2f34b3b503cf984cc824"
+    },
+    {
+      "suite": "authority-correction",
+      "runId": "RUN-1A13D71AB90-24EDA622",
+      "transaction": "0xaa068129b38de72b2f463e87852d62609dab60d697c10009f4833c0f47847d4c",
+      "status": "FINALIZED",
+      "execution": "FINISHED_WITH_RETURN",
+      "outcome": "REJECT → SUPPORT",
+      "classification": "CORRECTED",
+      "suite_sha256": "d1bd9a634795fd857b5af3487443c60b20217e5a8fcf6e4385473fd711219de2"
+    },
+    {
+      "suite": "conflict-abstention",
+      "runId": "RUN-1A13D72BD71-793D89D2",
+      "transaction": "0x40db9a12e1422fbf7f1ee1f5bc207a175346f1c72a0e623b05d9817591185864",
+      "status": "FINALIZED",
+      "execution": "FINISHED_WITH_RETURN",
+      "outcome": "SUPPORT → UNCLEAR",
+      "classification": "INCONCLUSIVE",
+      "suite_sha256": "4eb1d22382b08fb3f39d0c1377836d05ed60dc2fcc453dae2ca022750fe468be"
+    }
+  ]
+}
