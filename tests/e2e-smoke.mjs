@@ -72,7 +72,7 @@ await check("Predefined targets cannot masquerade as measured results", async ()
   assert.match(await page.locator(".experiment__result").innerText(), /LATEST ONCHAIN RESULT[\s\S]*NOT RUN/)
   assert.match(await page.locator(".score-dial").innerText(), /OBSERVED PASS RATE[\s\S]*0 ONCHAIN RUNS/)
   assert.equal(await page.locator(".score-dial strong").innerText(), "—")
-  assert.equal(await page.locator(".suite-commitment").count(), 0)
+  assert.equal(await page.locator(".suite-commitment").count(), contractReady ? 1 : 0)
 })
 
 await check("Fixture selection updates the experiment", async () => {

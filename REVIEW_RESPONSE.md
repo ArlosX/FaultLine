@@ -1,6 +1,6 @@
 # Faultline response to GenLayer steward
 
-Faultline v3 addresses the four issues in the steward's action request. The code and offline adversarial checks are implemented. A new Studionet deployment and four successful live runs are required before claiming the onchain portion is complete
+Faultline v3 addresses the four issues in the steward's action request. The new contract and canonical suites are verified on StudioNet. Four successful live runs are still required before claiming the consensus portion is complete
 
 | Steward concern | v3 correction | Evidence |
 | --- | --- | --- |
@@ -32,7 +32,7 @@ Production frontend build: passed after v3 UI integration
 
 Headless browser smoke check for v3: pending rerun after deployment
 
-New v3 Studionet contract address: **pending deployment**. The previous v2 address `0x089109838a3F31B376fE613CE604BE84bf3a3254` cannot initialize the benchmark with the project's wallet and must not be used as v3 evidence
+New v3 Studionet contract address: `0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA`. The read-only deployment verifier confirmed deployed source equality, all four canonical suites, exact fixture hashes, and `initialized=true`; `get_stats()` reports four suites and zero runs
 
 Initialization transaction: **not applicable** — the four suites are installed in the v3 constructor
 

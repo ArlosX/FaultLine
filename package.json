@@ -9,6 +9,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test:e2e": "node tests/e2e-smoke.mjs",
     "verify:studionet": "node scripts/verify-studionet.mjs",
+    "verify:deployment": "node scripts/verify-deployment.mjs",
     "deploy:contract": "genlayer deploy --contract contracts/faultline.py --rpc https://studio.genlayer.com/api"
   },
   "dependencies": {

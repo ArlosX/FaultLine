@@ -5,7 +5,7 @@ Faultline is an adversarial consensus benchmark for GenLayer judgment tasks
 It executes a fixed policy against a control fixture and one controlled fault, then stores an immutable receipt that classifies the response as stable, corrected, fragile, inconclusive, or failed
 
 - Live app: https://faultlined.netlify.app/
-- Faultline v3 requires a new StudioNet contract deployment. The v2 address `0x089109838a3F31B376fE613CE604BE84bf3a3254` cannot be initialized by the project wallet and must not be used for the v3 frontend
+- GenLayer StudioNet v3 contract: `0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA`. Its deployed source, four constructor-installed suites, fixture hashes, and version were verified against this repository
 
 ## What v3 implements
 
@@ -29,7 +29,7 @@ npm run dev
 Copy `.env.example` to `.env.local` after the contract is deployed
 
 ```text
-VITE_FAULTLINE_CONTRACT_ADDRESS=0xYOUR_NEW_V3_CONTRACT_ADDRESS
+VITE_FAULTLINE_CONTRACT_ADDRESS=0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA
 VITE_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 VITE_GENLAYER_CHAIN_ID=61999
 ```
@@ -58,8 +58,8 @@ npm run test:e2e -- http://127.0.0.1:4173
 
 The automated suite checks responsive layouts, navigation, truthful unconfigured states, accessibility, console errors, and overflow. Live writes require a deployed contract and a wallet, so the final transaction path is verified manually after deployment
 
-See `DEPLOYMENT.md` for the v3 release sequence. The current `.env.production` intentionally has no contract address until a v3 address is verified
+See `DEPLOYMENT.md` for the v3 release sequence. The verified v3 address is set in `.env.production`
 
 ## Steward review evidence
 
-`REVIEW_RESPONSE.md` maps every requested correction to source code and evidence. The v3 contract is prepared locally but still needs a StudioNet deployment and four live consensus runs. The offline regression suite proves constructor-installed canonical suites and tamper rejection under a GenLayer-shaped VM stub. It does **not** prove StudioNet consensus. Do not resubmit the review response as fully verified until the frontend points to the new v3 address and four successful live transaction hashes are recorded
+`REVIEW_RESPONSE.md` maps every requested correction to source code and evidence. The v3 contract is deployed and its source and canonical suites are verified on StudioNet. Four live consensus runs remain. The offline regression suite proves tamper rejection under a GenLayer-shaped VM stub; it does **not** prove StudioNet consensus. Do not resubmit the review response as fully verified until four successful live transaction hashes are recorded

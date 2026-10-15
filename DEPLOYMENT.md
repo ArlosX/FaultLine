@@ -1,6 +1,6 @@
 # Faultline v3 release
 
-The currently published v2 contract at `0x089109838a3F31B376fE613CE604BE84bf3a3254` is permanently tied to an inaccessible deployer account. It cannot be repaired in place. Do not use that address for v3
+The v2 contract at `0x089109838a3F31B376fE613CE604BE84bf3a3254` is permanently tied to an inaccessible deployer account. The replacement v3 contract is deployed at `0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA`
 
 ## 1. Publish and verify the canonical fixture host
 
@@ -8,13 +8,13 @@ The eight files under `public/fixtures` must remain publicly readable at `https:
 
 ## 2. Deploy the v3 contract
 
-Deploy `contracts/faultline.py` to GenLayer StudioNet with a wallet you control. The constructor installs all four canonical suites in the deployment transaction. No later initialization call or special wallet is needed. Record the new contract address and deployment transaction hash
+`contracts/faultline.py` was deployed to GenLayer StudioNet at `0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA`. The constructor installed all four canonical suites in the deployment transaction. No later initialization call or special wallet is needed. Record the deployment transaction hash for the steward submission
 
-Read `get_protocol()` and `get_stats()` from that address. Require `version=faultline-v3.0`, `initialized=true`, `canonical_base_url=https://faultlined.netlify.app`, `suite_count=4`, and `run_count=0`. Check `get_suites()` contains the four canonical IDs and their committed hashes. If any check fails, do not publish the frontend against that address
+`npm run verify:deployment -- 0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA` confirmed `version=faultline-v3.0`, `initialized=true`, `canonical_base_url=https://faultlined.netlify.app`, `suite_count=4`, and `run_count=0`. The deployed code, four canonical IDs, suite digests, and fixture hashes match this repository
 
 ## 3. Build and publish the frontend
 
-Replace `VITE_FAULTLINE_CONTRACT_ADDRESS` in `.env.production` with the verified v3 address, then run `npm run build`. For a manual Netlify deploy, upload the complete `dist` directory; if using Git deploy, push the configuration change and let Netlify rebuild. A Netlify environment variable with the same name overrides the checked-in value, so update it as well. Never put a private key in a frontend variable
+The verified v3 address is set in `.env.production`. Run `npm run build`. For a manual Netlify deploy, upload the complete `dist` directory; if using Git deploy, push the configuration change and let Netlify rebuild. A Netlify environment variable with the same name overrides the checked-in value, so update it as well. Never put a private key in a frontend variable
 
 The app rejects all pre-v3 addresses. Confirm `CONTRACT READY`, `FIXTURES 04`, and the four locked suite digests on the public site
 
