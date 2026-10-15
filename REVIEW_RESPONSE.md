@@ -30,6 +30,8 @@ Local contract regression: **22 tests passed** using a GenLayer-shaped VM stub, 
 
 Production frontend build: passed after v3 UI integration
 
+Production site: `https://faultlined.netlify.app`, Netlify deploy `6ad039f8519c57b884257e54` is `ready` and published. The Netlify file manifest includes all eight canonical fixtures with SHA-1 values matching the local files. Public browser access must still be confirmed from the user's connection
+
 Headless browser smoke check for v3: 17 checks passed; 4 checks dependent on the live RPC could not complete in this execution environment because Chromium received `ERR_CONNECTION_RESET` from the GenLayer endpoint. The contract itself was verified independently via the Studionet API. Repeat the full browser check from the published site before resubmission
 
 New v3 Studionet contract address: `0x8e2A3c4D95228c2bD13B3266Df15AfD3F2300EcA`. The read-only deployment verifier confirmed deployed source equality, all four canonical suites, exact fixture hashes, and `initialized=true`; `get_stats()` reports four suites and zero runs
