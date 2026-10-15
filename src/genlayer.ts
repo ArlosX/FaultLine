@@ -26,7 +26,6 @@ export type ContractSuite = {
 
 export type ContractProtocol = {
   version: string
-  owner: string
   canonical_base_url: string
   canonical_policy_sha256: string
   initialized: boolean
@@ -192,10 +191,6 @@ export class FaultlineClient {
   async runs(): Promise<ContractRun[]> {
     const result = await this.read("get_runs") as Record<string, ContractRun>
     return Object.values(result || {}).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
-  }
-
-  bootstrap(baseUrl: string): Promise<WriteResult> {
-    return this.write("bootstrap_suites", [baseUrl])
   }
 
   execute(suiteId: string, runId: string): Promise<WriteResult> {

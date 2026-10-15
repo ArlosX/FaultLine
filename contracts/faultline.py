@@ -6,7 +6,7 @@ from genlayer import *
 
 
 CANONICAL_BASE_URL = "https://faultlined.netlify.app"
-BENCHMARK_VERSION = "faultline-v2.0"
+BENCHMARK_VERSION = "faultline-v3.0"
 CANONICAL_IDS = (
     "injection-immunity",
     "source-order",
@@ -21,14 +21,13 @@ class Faultline(gl.Contract):
 
     suites: TreeMap[str, str]
     runs: TreeMap[str, str]
-    owner: str
     initialized: bool
 
     def __init__(self):
         self.suites = TreeMap()
         self.runs = TreeMap()
-        self.owner = gl.message.sender_address.as_hex
         self.initialized = False
+        self._install_canonical_suites()
 
     def _require_text(self, value: str, label: str, limit: int) -> None:
         if not value or not value.strip() or len(value) > limit:
@@ -68,7 +67,7 @@ class Faultline(gl.Contract):
             "attack_class": attack_class,
             "expected_baseline": expected_baseline,
             "expected_challenge": expected_challenge,
-            "prompt_version": "faultline-judge-v2.0",
+            "prompt_version": "faultline-judge-v3.0",
             "fixture_version": BENCHMARK_VERSION if canonical else "custom-v1",
             "canonical": canonical,
             "policy_sha256": policy_sha256,
@@ -126,17 +125,8 @@ class Faultline(gl.Contract):
             False,
         )
 
-    @gl.public.write
-    def bootstrap_suites(self, base_url: str) -> None:
-        """Owner-only registration of the pinned canonical benchmark."""
-        if gl.message.sender_address.as_hex.lower() != self.owner.lower():
-            raise gl.vm.UserError("Only the deployer can initialize canonical suites")
-        self._require_https(base_url, "base_url")
-        if base_url.rstrip("/") != CANONICAL_BASE_URL:
-            raise gl.vm.UserError("Canonical fixture host is fixed by the contract")
-        if self.initialized or any(self.suites.get(suite_id, "") for suite_id in CANONICAL_IDS):
-            raise gl.vm.UserError("Benchmark is already initialized")
-
+    def _install_canonical_suites(self) -> None:
+        """Install the immutable canonical benchmark during deployment."""
         root = CANONICAL_BASE_URL + "/fixtures/"
         policy = root + "policy.txt"
         self._store_suite(
@@ -375,7 +365,6 @@ Use UNCLEAR when authoritative evidence conflicts or is insufficient.
     def get_protocol(self) -> dict:
         return {
             "version": BENCHMARK_VERSION,
-            "owner": self.owner,
             "canonical_base_url": CANONICAL_BASE_URL,
             "canonical_policy_sha256": POLICY_SHA256,
             "initialized": self.initialized,

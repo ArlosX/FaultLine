@@ -57,20 +57,6 @@ function pinnedFixtures(suite: ContractSuite) {
   ]
 }
 
-function canonicalFixtureManifest(protocol: ContractProtocol) {
-  const root = `${protocol.canonical_base_url}/fixtures/`
-  return [
-    { url: `${root}policy.txt`, sha256: protocol.canonical_policy_sha256 },
-    { url: `${root}baseline-reject.txt`, sha256: "bdc862923d57824036a5a77690b9dd1b9dcd9eff011a26d6e35700fbf02bd0af" },
-    { url: `${root}baseline-support.txt`, sha256: "53d8a304ddf67f7eca35d5da7d8abbe47d55fd42dcee771cbba3c077500f8ae2" },
-    { url: `${root}baseline-order-a.txt`, sha256: "44703ba14c02799f036a0c2f753c1c7116216a5fb2f74f0c7ed6448f6ddbd452" },
-    { url: `${root}challenge-injection.txt`, sha256: "7e3d1159c657ecef1367d26bbd604d546e98c61fc752759c45806553fe9bac46" },
-    { url: `${root}challenge-order-b.txt`, sha256: "ec7eafc81cada2ca96f2c433e523595de604db403003b52d459c09936c3cfc8d" },
-    { url: `${root}challenge-correction.txt`, sha256: "75a658b80f88880c08d1e8e06001c5a28b24ce4ee00a7038f4d53f0a47d21742" },
-    { url: `${root}challenge-conflict.txt`, sha256: "ba033201b2ea1c117c2868e309db632094e2fea15dc46db5cd4778f29bc63d45" },
-  ]
-}
-
 function shortAddress(value: string) {
   return value ? `${value.slice(0, 6)}…${value.slice(-4)}` : "Connect wallet"
 }
@@ -116,7 +102,6 @@ function App() {
   const [selected, setSelected] = useState(suites[0])
   const [runOpen, setRunOpen] = useState(false)
   const [running, setRunning] = useState(false)
-  const [initializing, setInitializing] = useState(false)
   const [step, setStep] = useState(0)
   const [runs, setRuns] = useState<Run[]>([])
   const [stats, setStats] = useState<ContractStats>(emptyStats)
@@ -127,7 +112,6 @@ function App() {
   const [error, setError] = useState("")
   const [txHash, setTxHash] = useState("")
   const [copied, setCopied] = useState(false)
-  const [operation, setOperation] = useState<"run" | "initialize">("run")
 
   const loadContract = useCallback(async () => {
     if (!isContractAddress(defaultAddress)) {
@@ -142,8 +126,11 @@ function App() {
     try {
       const client = new FaultlineClient(defaultAddress, defaultEndpoint)
       const nextProtocol = await client.protocol()
-      if (nextProtocol.version !== "faultline-v2.0") throw new Error("This contract uses the older unprotected benchmark. Deploy Faultline v2 and update VITE_FAULTLINE_CONTRACT_ADDRESS")
+      if (nextProtocol.version !== "faultline-v3.0") throw new Error("This site requires the Faultline v3 contract with suites installed at deployment")
       const [nextStats, nextRuns, nextSuites] = await Promise.all([client.stats(), client.runs(), client.suites()])
+      if (!nextProtocol.initialized || nextStats.suite_count < 4 || nextSuites.filter((suite) => suite.canonical && suite.fixture_version === nextProtocol.version).length !== 4) {
+        throw new Error("The deployed contract does not contain the four locked canonical suites")
+      }
       setProtocol(nextProtocol)
       setLockedSuites(nextSuites)
       setStats(nextStats)
@@ -175,7 +162,7 @@ function App() {
   const selectedLocked = useMemo(() => lockedSuites.find((suite) => suite.suite_id === selected.id), [lockedSuites, selected.id])
   const selectedRuns = useMemo(() => validRuns.filter((run) => run.suiteId === selected.id), [validRuns, selected.id])
   const selectedPassRate = selectedRuns.length ? Math.round(selectedRuns.filter((run) => run.passed).length / selectedRuns.length * 100) : null
-  const busy = running || initializing
+  const busy = running
 
   const connect = async () => {
     setError("")
@@ -209,38 +196,12 @@ function App() {
     return { client: new FaultlineClient(defaultAddress, defaultEndpoint, active, onSubmitted), active }
   }
 
-  const initializeBenchmark = async () => {
-    if (!isContractAddress(defaultAddress) || !protocol) return
-    setInitializing(true)
-    setError("")
-    setStep(0)
-    setTxHash("")
-    setOperation("initialize")
-    try {
-      await requirePublicFixtures(canonicalFixtureManifest(protocol))
-      const { client, active } = await writer((hash) => { setTxHash(hash); setStep(2) })
-      if (active.toLowerCase() !== protocol.owner.toLowerCase()) throw new Error("Only the deploying wallet can initialize the canonical benchmark")
-      setStep(1)
-      await client.bootstrap(protocol.canonical_base_url)
-      setStep(3)
-      await client.waitForRecord()
-      await loadContract()
-      if (!(await client.protocol()).initialized) throw new Error("Initialization transaction returned but canonical suites were not recorded")
-      setStep(4)
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Benchmark initialization failed")
-    } finally {
-      setInitializing(false)
-    }
-  }
-
   const startRun = async () => {
     if (!isContractAddress(defaultAddress) || stats.suite_count === 0 || !protocol) return
     setRunning(true)
     setError("")
     setStep(0)
     setTxHash("")
-    setOperation("run")
     try {
       const reader = new FaultlineClient(defaultAddress, defaultEndpoint)
       const lockedSuite = await reader.suite(selected.id)
@@ -296,7 +257,7 @@ function App() {
   }
 
   const networkLabel = network === "ready" ? "CONTRACT READY" : network === "checking" ? "READING CONTRACT" : network === "error" ? "CONTRACT ERROR" : "CONTRACT NOT CONFIGURED"
-  const completionTitle = operation === "initialize" ? "Benchmark initialized" : `${latestSelected?.verdict || selected.verdict} signal recorded`
+  const completionTitle = `${latestSelected?.verdict || selected.verdict} signal recorded`
 
   return (
     <div className="lab" id="top">
@@ -392,17 +353,14 @@ function App() {
               <div className="drawer-network"><span><i /> GenLayer Studionet</span><small>{networkLabel}</small></div>
               {network === "unconfigured" && <div className="drawer-notice"><CircleAlert size={18} /><p>Set VITE_FAULTLINE_CONTRACT_ADDRESS and rebuild this site before public release</p></div>}
               {network === "error" && <div className="drawer-notice"><CircleAlert size={18} /><p>{error || "The configured contract could not be read"}</p></div>}
-              {network === "ready" && stats.suite_count === 0 && <div className="drawer-notice"><CircleAlert size={18} /><p>Only the deploying wallet can activate the four canonical suites. The host, fixture hashes and benchmark version are pinned in the contract</p></div>}
               {error && network === "ready" && <div className="drawer-notice"><CircleAlert size={18} /><p>{error}</p></div>}
               {txHash && <div className="drawer-notice"><p style={{ overflowWrap: "anywhere" }}>Transaction: {txHash}</p><button onClick={() => navigator.clipboard.writeText(txHash)}>Copy transaction hash</button></div>}
               {network === "error" && <button className="drawer-trigger" onClick={loadContract}><RefreshCw size={18} /> Retry contract read</button>}
-              {network === "ready" && stats.suite_count === 0 && (!account || account.toLowerCase() === protocol?.owner.toLowerCase()) && <button className="drawer-trigger" onClick={initializeBenchmark}><ShieldCheck size={18} /> {account ? "Initialize locked benchmark" : "Connect deployer wallet"}</button>}
-              {network === "ready" && stats.suite_count === 0 && account && account.toLowerCase() !== protocol?.owner.toLowerCase() && <div className="drawer-notice"><CircleAlert size={18} /><p>This wallet cannot initialize the benchmark. Connect the wallet that deployed this contract</p></div>}
               {network === "ready" && stats.suite_count > 0 && <button className="drawer-trigger" onClick={startRun}><Play size={18} fill="currentColor" /> Run on GenLayer</button>}
               {network === "checking" && <button className="drawer-trigger" disabled><RotateCw size={18} /> Reading contract</button>}
             </> : <div className="drawer-progress" aria-live="polite">
               <div className={busy ? "progress-signal" : error ? "progress-signal progress-signal--failed" : "progress-signal progress-signal--done"}>{busy ? <RotateCw size={25} /> : error ? <CircleAlert size={28} /> : <CheckCircle2 size={28} />}</div>
-              <h3>{busy ? (initializing ? "Preparing the benchmark" : "Consensus under pressure") : error ? "Transaction was not verified" : completionTitle}</h3>
+              <h3>{busy ? "Consensus under pressure" : error ? "Transaction was not verified" : completionTitle}</h3>
               <p>{busy ? "Waiting for validator consensus, successful GenVM execution and the matching onchain record" : error ? "No successful benchmark run has been confirmed for this attempt" : "The contract executed successfully and the matching record is visible in the onchain ledger"}</p>
               {txHash && <code className="transaction-hash">TX {txHash.slice(0, 12)}…{txHash.slice(-8)}</code>}
               <div className="progress-list">{runSteps.map((label, index) => <div className={index < step || (!busy && !error) ? "progress-step progress-step--done" : index === step && busy ? "progress-step progress-step--active" : "progress-step"} key={label}><span>{index < step || (!busy && !error) ? <Check size={13} /> : index + 1}</span><p>{label}</p>{index === step && busy && <small>RUNNING</small>}</div>)}</div>

@@ -6,7 +6,7 @@ import { studionet } from 'genlayer-js/chains'
 const address = process.argv[2]
 const evidence = process.argv.slice(3)
 if (!/^0x[0-9a-fA-F]{40}$/.test(address || '') || evidence.length !== 4) {
-  console.error('Usage: node scripts/verify-studionet.mjs 0xV2Contract RUN-ID=0xTransactionHash [three more run/hash pairs]')
+  console.error('Usage: node scripts/verify-studionet.mjs 0xV3Contract RUN-ID=0xTransactionHash [three more run/hash pairs]')
   process.exit(2)
 }
 
@@ -36,7 +36,7 @@ try {
   const client = createClient({ chain: studionet, endpoint: process.env.GENLAYER_RPC_URL || 'https://studio.genlayer.com/api' })
   const read = async (functionName, args = []) => normalize(await client.readContract({ address, functionName, args }))
   const protocol = await read('get_protocol')
-  assert(protocol.version === 'faultline-v2.0', 'The supplied contract is not Faultline v2')
+  assert(protocol.version === 'faultline-v3.0', 'The supplied contract is not Faultline v3')
   assert(protocol.initialized === true, 'Canonical suites have not been initialized')
   assert(protocol.canonical_base_url === 'https://faultlined.netlify.app', 'Unexpected fixture host')
   const suites = await read('get_suites')

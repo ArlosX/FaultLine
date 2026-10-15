@@ -60,7 +60,6 @@ class ContractRegression(unittest.TestCase):
     def setUp(self):
         gl.message.sender_address.as_hex = '0x' + '1' * 40
         self.contract = module.Faultline()
-        self.contract.bootstrap_suites('https://faultlined.netlify.app')
         def fetch(url, *, method):
             self.assertEqual(method, 'GET')
             return Response(200, {}, (ROOT / 'public/fixtures' / url.rsplit('/', 1)[1]).read_bytes())
@@ -104,26 +103,24 @@ class ContractRegression(unittest.TestCase):
             self.contract.execute_suite('injection-immunity', 'run-1')
         self.assertEqual(self.contract.get_runs(), {})
 
-    def test_only_deployer_can_initialize_canonical_suites(self):
+    def test_canonical_suites_exist_at_deployment_with_any_deployer(self):
         contract = module.Faultline()
+        self.assertEqual(set(contract.get_suites()), set(module.CANONICAL_IDS))
         gl.message.sender_address.as_hex = '0x' + '2' * 40
-        with self.assertRaisesRegex(UserError, 'Only the deployer'):
-            contract.bootstrap_suites(module.CANONICAL_BASE_URL)
-        self.assertEqual(contract.get_suites(), {})
+        other = module.Faultline()
+        self.assertEqual(contract.get_suites(), other.get_suites())
+        self.assertTrue(other.get_protocol()['initialized'])
 
     def test_canonical_host_cannot_be_substituted(self):
         contract = module.Faultline()
-        with self.assertRaisesRegex(UserError, 'fixture host is fixed'):
-            contract.bootstrap_suites('https://attacker.example')
-        self.assertEqual(contract.get_suites(), {})
+        for suite in contract.get_suites().values():
+            for phase in ('policy', 'baseline', 'challenge'):
+                self.assertTrue(suite[phase + '_url'].startswith(module.CANONICAL_BASE_URL + '/fixtures/'))
 
-    def test_canonical_bootstrap_is_one_time(self):
-        before = self.contract.get_suites()
-        with self.assertRaisesRegex(UserError, 'already initialized'):
-            self.contract.bootstrap_suites(module.CANONICAL_BASE_URL)
-        self.assertEqual(self.contract.get_suites(), before)
+    def test_canonical_bootstrap_cannot_be_called_after_deployment(self):
+        self.assertFalse(hasattr(self.contract, 'bootstrap_suites'))
 
-    def test_reserved_suite_cannot_be_overwritten_after_bootstrap(self):
+    def test_reserved_suite_cannot_be_overwritten_after_deployment(self):
         before = self.contract.get_suite('injection-immunity')
         with self.assertRaisesRegex(UserError, 'reserved'):
             self.contract.create_suite(
@@ -135,13 +132,14 @@ class ContractRegression(unittest.TestCase):
 
     def test_canonical_identifiers_cannot_be_squatted(self):
         contract = module.Faultline()
+        before = contract.get_suites()
         with self.assertRaisesRegex(UserError, 'reserved'):
             contract.create_suite(
                 'injection-immunity', 'fake', 'https://attacker.example/policy',
                 'https://attacker.example/base', 'https://attacker.example/fault',
                 'PROMPT INJECTION', 'REJECT', 'REJECT', 'a' * 64, 'b' * 64, 'c' * 64,
             )
-        self.assertEqual(contract.get_suites(), {})
+        self.assertEqual(contract.get_suites(), before)
 
     def test_canonical_manifest_is_versioned_and_committed(self):
         protocol = self.contract.get_protocol()

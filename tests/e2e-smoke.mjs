@@ -96,9 +96,9 @@ await check("Run drawer opens from the active experiment", async () => {
   assert.match(await page.getByRole("dialog").innerText(), contractReady ? /CONTRACT READY/ : /CONTRACT NOT CONFIGURED/)
 })
 
-await check("Uninitialized contract cannot fabricate an onchain run", async () => {
-  assert.equal(await page.getByRole("button", { name: "Run on GenLayer" }).count(), 0)
-  assert.match(await page.getByRole("dialog").innerText(), contractReady ? /Only the deploying wallet can activate the four canonical suites/ : /Set VITE_FAULTLINE_CONTRACT_ADDRESS/)
+await check("Contract state cannot fabricate an onchain run", async () => {
+  assert.equal(await page.getByRole("button", { name: "Run on GenLayer" }).count(), contractReady ? 1 : 0)
+  if (!contractReady) assert.match(await page.getByRole("dialog").innerText(), /Set VITE_FAULTLINE_CONTRACT_ADDRESS/)
   assert.equal(await page.locator(".console-row").count(), 0)
 })
 

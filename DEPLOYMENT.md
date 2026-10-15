@@ -1,50 +1,35 @@
-# Faultline v2 release and steward evidence
+# Faultline v3 release
 
-The v1 Studionet contract at `0xdD32cB20635515d8f3D5BeDC74c8b00472CD5221` cannot be upgraded by changing the frontend. It permits arbitrary canonical initialization and does not pin fixture hashes. Deploy `contracts/faultline.py` as a **new contract** before publishing this v2 frontend
+The currently published v2 contract at `0x089109838a3F31B376fE613CE604BE84bf3a3254` is permanently tied to an inaccessible deployer account. It cannot be repaired in place. Do not use that address for v3
 
-## 1. Publish the fixture host first
+## 1. Publish and verify the canonical fixture host
 
-Deploy this repository's `faultline` directory to the public `https://faultlined.netlify.app` site. The canonical host is fixed in the contract. Build settings:
+The eight files under `public/fixtures` must remain publicly readable at `https://faultlined.netlify.app/fixtures/`. Their exact byte hashes are fixed in `contracts/faultline.py` and listed in `REVIEW_RESPONSE.md`. Do not change those files; any change requires a new contract version
 
-```text
-Base directory: faultline
-Build command: npm run build
-Publish directory: dist
-Node version: 22
-```
+## 2. Deploy the v3 contract
 
-Verify each of the eight URLs in `public/fixtures` is publicly readable without a login and has the exact SHA-256 shown in `REVIEW_RESPONSE.md`. A changed fixture is intentionally rejected by the contract, so do not edit these files after deployment. Changes require a new benchmark version and a new contract
+Deploy `contracts/faultline.py` to GenLayer StudioNet with a wallet you control. The constructor installs all four canonical suites in the deployment transaction. No later initialization call or special wallet is needed. Record the new contract address and deployment transaction hash
 
-## 2. Verify the deployed v2 Intelligent Contract
+Read `get_protocol()` and `get_stats()` from that address. Require `version=faultline-v3.0`, `initialized=true`, `canonical_base_url=https://faultlined.netlify.app`, `suite_count=4`, and `run_count=0`. Check `get_suites()` contains the four canonical IDs and their committed hashes. If any check fails, do not publish the frontend against that address
 
-The v2 contract is deployed on Studionet at `0x089109838a3F31B376fE613CE604BE84bf3a3254`. A read-only call to `get_protocol()` confirmed version `faultline-v2.0`, canonical host `https://faultlined.netlify.app`, the committed policy digest, owner `0x4F7f0fA81fEF3bf7e9706ee20111b76527d02454`, and `initialized=false`. The deployed source was compared byte-for-byte with `contracts/faultline.py`. Record the deployment transaction hash for the steward package. The v1 address must not be reused
+## 3. Build and publish the frontend
 
-The source includes a fixed host, eight fixture digests, a version marker, reserved canonical IDs, and an `owner` field set to the deploying wallet. The deployer is the only account allowed to call `bootstrap_suites`
+Replace `VITE_FAULTLINE_CONTRACT_ADDRESS` in `.env.production` with the verified v3 address, then run `npm run build`. For a manual Netlify deploy, upload the complete `dist` directory; if using Git deploy, push the configuration change and let Netlify rebuild. A Netlify environment variable with the same name overrides the checked-in value, so update it as well. Never put a private key in a frontend variable
 
-## 3. Configure and publish the frontend
+The app rejects all pre-v3 addresses. Confirm `CONTRACT READY`, `FIXTURES 04`, and the four locked suite digests on the public site
 
-Set `VITE_FAULTLINE_CONTRACT_ADDRESS=0x089109838a3F31B376fE613CE604BE84bf3a3254` in the Netlify build environment, then rebuild and publish. The checked-in `.env.production` has this address, but a Netlify environment variable can override it. `VITE_GENLAYER_RPC_URL=https://studio.genlayer.com/api` and `VITE_GENLAYER_CHAIN_ID=61999` are the expected Studionet settings. Do not put private keys in frontend variables
+## 4. Run the four live cases
 
-The app explicitly rejects a contract without `get_protocol().version == faultline-v2.0`. On a preview domain the app still reads and pins fixture bytes from `faultlined.netlify.app`; public CORS for those fixtures is configured in `public/_headers`
+With any funded Studionet wallet, run each canonical case once. Copy each run ID and transaction hash. A valid run must be `ACCEPTED` or `FINALIZED`, have `FINISHED_WITH_RETURN`, and appear in the onchain ledger after refresh with its exact suite digest and fixture hashes
 
-## 4. Initialize with the deploying wallet
-
-Open the published site, connect the wallet used for contract deployment, select **Launch protocol**, then **Initialize locked benchmark**. Record the transaction hash. The app must display successful GenVM execution and read back four canonical suites. Another wallet must see a message that it cannot initialize, and a direct onchain call by that wallet must be rejected
-
-## 5. Run and prove all four cases
-
-Run each canonical case once with the public site. Copy the four run IDs and their transaction hashes. For each transaction, confirm `ACCEPTED` or `FINALIZED`, `FINISHED_WITH_RETURN`, the expected baseline and challenge results, a stored `suite_sha256`, and three observed hashes equal to the commitments in the suite. Only successful writes with matching stored records count as evidence
-
-Use the read-only verifier to produce a machine-readable report:
+Run the read-only verifier from this repository:
 
 ```powershell
-npm run verify:studionet -- 0xNEW_V2_CONTRACT RUN-...=0xTRANSACTION_1 RUN-...=0xTRANSACTION_2 RUN-...=0xTRANSACTION_3 RUN-...=0xTRANSACTION_4
+npm run verify:studionet -- 0xNEW_V3_CONTRACT RUN-...=0xTRANSACTION_1 RUN-...=0xTRANSACTION_2 RUN-...=0xTRANSACTION_3 RUN-...=0xTRANSACTION_4
 ```
 
-The verifier fails if a suite is missing, hashes differ, the observed outcome is wrong, a transaction reports an execution error, or a transaction does not decode to its claimed run. It labels accepted transactions whose finality is still pending
+The verifier fails if a suite is missing, hashes differ, outcomes are wrong, execution fails, or a transaction does not decode to its claimed run
 
-## 6. Adversarial evidence and resubmission
+## 5. Update the existing steward submission
 
-Run `python -m unittest discover -s tests -p contract_regression.py -v` with Python 3. The suite covers unauthorized initialization, wrong host, ID squatting, source mutation, fabricated quotes, source errors, validator disagreement, and all four canonical scenarios. These are offline contract tests, not substitutes for the four StudioNet transactions
-
-Attach the new contract address, the verifier report, the four transaction links, GitHub source, and public app to the existing Faultline submission, then select **Resubmit**. `REVIEW_RESPONSE.md` contains the source-to-request mapping
+Attach the new contract address, deployment transaction, verifier report, four run transactions, public app, and GitHub source to the existing Faultline submission before selecting **Resubmit**. The offline contract tests are useful supporting evidence but do not substitute for StudioNet transactions
